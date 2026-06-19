@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MT Studio — ระบบจัดการไลฟ์</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand"><span class="mt">MT</span><span class="st">STUDIO</span></div>
+    <div class="profile">MT</div>
+  </div>
+
+  <div class="page active" id="page-home">
+    <div class="eyebrow">All Mi Tar' Studio</div>
+    <div class="page-title">หน้าหลัก</div>
+    <div class="page-desc">ภาพรวมร้านวันนี้</div>
+    <div class="stats">
+      <div class="stat"><div class="stat-lbl">ยอดขายวันนี้</div><div class="stat-val gold" id="h-sales">฿0</div></div>
+      <div class="stat"><div class="stat-lbl">ออเดอร์ทั้งหมด</div><div class="stat-val" id="h-orders">0</div></div>
+      <div class="stat"><div class="stat-lbl">รอชำระเงิน</div><div class="stat-val amber" id="h-pending">0</div></div>
+      <div class="stat"><div class="stat-lbl">สต็อกคงเหลือ</div><div class="stat-val" id="h-stock">0</div></div>
+    </div>
+    <div class="bank-card">
+      <div class="bank-qr" id="h-qr"></div>
+      <div style="flex:1">
+        <div class="bank-lbl">บัญชีรับเงิน · ส่งให้ลูกค้าเมื่อ CF</div>
+        <div class="bank-bk" id="h-bank-bk">ยังไม่ตั้งค่าบัญชี</div>
+        <div class="bank-no" id="h-bank-no">—</div>
+        <button class="bank-edit" data-goto="setting-bank">แก้ไขบัญชี</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page-sale">
+    <div class="eyebrow">Live Selling</div>
+    <div class="page-title">ขาย · ดูด CF</div>
+    <div class="page-desc">พิมพ์คอมเมนต์ทดสอบ เช่น "ฟ้า cf A01 C01" หรือรอคอมเมนต์จากไลฟ์จริง</div>
+    <div class="panel">
+      <div class="panel-h"><span class="ttl">คอมเมนต์สด → ออเดอร์</span><span class="num" id="feed-count" style="color:var(--muted)">0</span></div>
+      <div class="row-in">
+        <input class="input num" id="sim-input" placeholder='เช่น cf A01 C01 2 ตัว' />
+        <button class="btn btn-ink" id="sim-send">ส่ง</button>
+      </div>
+      <div class="feed" id="feed"><div class="empty">กำลังโหลด...</div></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-orders">
+    <div class="eyebrow">Orders</div>
+    <div class="page-title">รายการสั่งซื้อ</div>
+    <div class="page-desc">ออเดอร์ทั้งหมดจากการ CF</div>
+    <div style="margin-bottom:12px"><input class="input" id="order-search" placeholder="ค้นหาชื่อลูกค้า..." style="width:100%"/></div>
+    <div class="panel">
+      <div class="panel-h">
+        <span class="ttl">ออเดอร์</span>
+        <div style="display:flex;gap:4px;" id="ofilters">
+          <button class="btn btn-sm filt active" data-f="all">ทั้งหมด</button>
+          <button class="btn btn-sm filt" data-f="pending">รอชำระ</button>
+          <button class="btn btn-sm filt" data-f="paid">ชำระแล้ว</button>
+        </div>
+      </div>
+      <table class="otable"><tbody id="orders-body"></tbody></table>
+    </div>
+  </div>
+
+  <div class="page" id="page-check">
+    <div class="eyebrow">Payment</div>
+    <div class="page-title">เช็คยอด · ทวงเงิน</div>
+    <div class="page-desc">ใครยังไม่โอน ค้างนานแค่ไหน กดทวงได้ทันที</div>
+    <div class="stats" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat"><div class="stat-lbl">ค้างชำระ</div><div class="stat-val amber" id="c-unpaid">0</div></div>
+      <div class="stat"><div class="stat-lbl">ยอดค้าง</div><div class="stat-val red" id="c-amount">฿0</div></div>
+      <div class="stat"><div class="stat-lbl">โอนแล้ว</div><div class="stat-val gold" id="c-paid">0</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><span class="ttl">ออเดอร์ค้างชำระ</span><button class="btn btn-sm btn-ink" id="remind-all">ทวงทุกคน</button></div>
+      <div id="unpaid-list"></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-stock">
+    <div class="eyebrow">Inventory</div>
+    <div class="page-title">สต็อก</div>
+    <div class="page-desc">จัดการสินค้าและจำนวนคงเหลือ · กดตัวเลขเพื่อแก้</div>
+    <div class="panel">
+      <div class="panel-h"><span class="ttl">สินค้าทั้งหมด</span><button class="btn btn-sm btn-ink" id="toggle-add">＋ เพิ่มสินค้า</button></div>
+      <div class="addform" id="addform" style="display:none">
+        <div class="r2">
+          <input class="input num" id="np-code" placeholder="รหัส เช่น D04" />
+          <input class="input num" id="np-price" type="number" placeholder="ราคา" />
+        </div>
+        <input class="input" id="np-name" placeholder="ชื่อสินค้า" />
+        <input class="input num" id="np-stock" type="number" placeholder="จำนวนสต็อก" />
+        <div class="err" id="np-err" style="display:none"></div>
+        <button class="btn btn-ink" id="np-save">บันทึกสินค้า</button>
+      </div>
+      <div id="stock-list"></div>
+    </div>
+  </div>
+
+  <div class="page" id="page-report">
+    <div class="eyebrow">Report</div>
+    <div class="page-title">สินค้าขายดี</div>
+    <div class="page-desc">อันดับสินค้าที่ขายได้มากที่สุด</div>
+    <div class="panel"><div class="panel-h"><span class="ttl">อันดับขายดี</span></div><div id="best-list"></div></div>
+  </div>
+
+  <div class="page" id="page-setting-bank">
+    <div class="eyebrow">Settings</div>
+    <div class="page-title">บัญชีรับเงิน</div>
+    <div class="page-desc">บัญชีนี้จะถูกส่งให้ลูกค้าอัตโนมัติเมื่อ CF</div>
+    <div class="panel"><div class="form-pad">
+      <input class="input" id="set-bank" placeholder="ชื่อธนาคาร เช่น กสิกรไทย" />
+      <input class="input num" id="set-acc" placeholder="เลขบัญชี" />
+      <input class="input" id="set-accname" placeholder="ชื่อบัญชี" />
+      <input class="input num" id="set-pp" placeholder="เบอร์พร้อมเพย์ (ถ้ามี)" />
+      <button class="btn btn-ink" id="set-bank-save">บันทึกบัญชี</button>
+    </div></div>
+  </div>
+
+  <div class="page" id="page-setting-remind">
+    <div class="eyebrow">Settings</div>
+    <div class="page-title">ข้อความทวง</div>
+    <div class="page-desc">ข้อความที่ส่งหาลูกค้าตอนกดทวงยอด</div>
+    <div class="panel"><div class="form-pad">
+      <input class="input" id="set-remind-msg" value="กรุณาโอนยอดด้วยนะคะ" />
+      <button class="btn btn-ink" id="set-remind-save">บันทึกข้อความ</button>
+    </div></div>
+  </div>
+
+  <div class="page" id="page-setting-page">
+    <div class="eyebrow">Settings</div>
+    <div class="page-title">เชื่อมต่อเพจ</div>
+    <div class="page-desc">กรอก Page ID และ Token หลัง Facebook App ผ่าน review แล้ว</div>
+    <div class="panel"><div class="form-pad">
+      <input class="input" id="set-pageid" placeholder="Facebook Page ID" />
+      <input class="input" id="set-pagename" placeholder="ชื่อเพจ" />
+      <input class="input" id="set-token" placeholder="Page Access Token" />
+      <button class="btn btn-ink" id="set-page-save">บันทึก</button>
+    </div></div>
+  </div>
+
+  <div class="page" id="page-soon">
+    <div class="placeholder"><div class="big">✦</div><h3>กำลังพัฒนา</h3><p>ฟีเจอร์นี้ยังไม่เปิดให้ใช้ในเวอร์ชันนี้</p></div>
+  </div>
+
+  <div class="tabbar">
+    <button class="tab active" data-page="home"><span class="ic">⌂</span><span class="lb">หน้าหลัก</span></button>
+    <button class="tab" data-page="sale"><span class="ic">▶</span><span class="lb">ขาย</span></button>
+    <button class="tab" data-page="orders"><span class="ic">≣</span><span class="lb">ออเดอร์</span></button>
+    <button class="tab" data-page="check"><span class="ic">✔</span><span class="lb">เช็คยอด</span></button>
+    <button class="tab" id="tab-more"><span class="ic">⋯</span><span class="lb">เพิ่มเติม</span></button>
+  </div>
+</div>
+
+<div class="sheet-scrim" id="sheet-scrim"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-grip"></div>
+  <div class="sheet-title">เมนูทั้งหมด</div>
+  <div class="sheet-sec">จัดการร้าน</div>
+  <button class="si" data-page="stock"><span class="ic">▦</span> สต็อกสินค้า</button>
+  <button class="si" data-page="report"><span class="ic">◔</span> รายงานสินค้าขายดี</button>
+  <button class="si" data-page="soon"><span class="ic">🚚</span> รับพัสดุ <span class="soon-tag">เร็วๆ นี้</span></button>
+  <div class="sheet-sec">ตั้งค่า</div>
+  <button class="si" data-page="setting-bank"><span class="ic">🏦</span> บัญชีรับเงิน</button>
+  <button class="si" data-page="setting-remind"><span class="ic">🔔</span> ข้อความทวง</button>
+  <button class="si" data-page="setting-page"><span class="ic">📘</span> เชื่อมต่อเพจ Facebook</button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="stock-modal">
+  <div class="modal-box">
+    <div class="modal-h" id="sm-title">แก้สต็อก</div>
+    <input class="input num" id="sm-input" type="number" />
+    <div style="display:flex;gap:8px;">
+      <button class="btn btn-ink" id="sm-save" style="flex:1">บันทึก</button>
+      <button class="btn btn-out" id="sm-cancel" style="flex:0 0 auto">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>
